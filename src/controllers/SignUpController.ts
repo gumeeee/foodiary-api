@@ -1,12 +1,13 @@
 import { z } from "zod";
 
+import { hash } from "bcryptjs";
 import { eq } from "drizzle-orm";
 import { db } from "../db";
-import { hash } from "bcryptjs";
+import { usersTable } from "../db/schema";
+import { calculateGoals } from "../lib/calculateCalories";
+import { signAccessTokenFor } from "../lib/jwt";
 import { HttpRequest, HttpResponse } from "../types/Http";
 import { badRequest, conflict, created } from "../utils/http";
-import { usersTable } from "../db/schema";
-import { signAccessTokenFor } from "../lib/jwt";
 
 const schema = z.object({
   goal: z.enum(["lose", "maintain", "gain"]),
@@ -43,16 +44,30 @@ export class SignUpController {
 
     const hashedPassword = await hash(data.account.password, 8);
 
+    const goals = calculateGoals({
+      activityLevel: data.activityLevel,
+      birthDate: new Date(data.birthDate),
+      gender: data.gender,
+      goal: data.goal,
+      height: data.height,
+      weight: data.weight,
+    });
+
     const [user] = await db
       .insert(usersTable)
       .values({
-        ...data,
-        ...data.account,
+        name: data.account.name,
+        email: data.account.email,
         password: hashedPassword,
-        calories: 0,
-        proteins: 0,
-        carbohydrate: 0,
-        fats: 0,
+        goal: data.goal,
+        birthDate: data.birthDate,
+        height: data.height,
+        weight: data.weight,
+        activityLevel: data.activityLevel,
+        calories: goals.calories,
+        proteins: goals.proteins,
+        carbohydrate: goals.carbohydrates,
+        fats: goals.fats,
       })
       .returning({ id: usersTable.id });
 
