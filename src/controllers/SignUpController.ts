@@ -6,6 +6,7 @@ import { hash } from "bcryptjs";
 import { HttpRequest, HttpResponse } from "../types/Http";
 import { badRequest, conflict, created } from "../utils/http";
 import { usersTable } from "../db/schema";
+import { signAccessTokenFor } from "../lib/jwt";
 
 const schema = z.object({
   goal: z.enum(["lose", "maintain", "gain"]),
@@ -55,8 +56,10 @@ export class SignUpController {
       })
       .returning({ id: usersTable.id });
 
+    const accessToken = signAccessTokenFor(user.id);
+
     return created({
-      userId: user.id,
+      accessToken,
     });
   }
 }
