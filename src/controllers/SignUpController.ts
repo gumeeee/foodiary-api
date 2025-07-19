@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { eq } from "drizzle-orm";
 import { db } from "../db";
+import { hash } from "bcryptjs";
 import { HttpRequest, HttpResponse } from "../types/Http";
 import { badRequest, conflict, created } from "../utils/http";
 import { usersTable } from "../db/schema";
@@ -39,11 +40,14 @@ export class SignUpController {
       return conflict({ error: "This email is already registered." });
     }
 
+    const hashedPassword = await hash(data.account.password, 8);
+
     const [user] = await db
       .insert(usersTable)
       .values({
         ...data,
         ...data.account,
+        password: hashedPassword,
         calories: 0,
         proteins: 0,
         carbohydrate: 0,
