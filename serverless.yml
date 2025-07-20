@@ -65,3 +65,10 @@ functions:
       - httpApi:
           path: /meals/{id}
           method: GET
+
+resources:
+  Resources:
+    UploadsBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: foodiary-v1-uploads-gume
